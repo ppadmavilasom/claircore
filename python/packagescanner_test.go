@@ -2,16 +2,12 @@ package python_test
 
 import (
 	"context"
-	"net/http"
 	"path"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-
 	"github.com/quay/claircore"
 	"github.com/quay/claircore/python"
-	"github.com/quay/claircore/test/fetch"
-	"github.com/quay/claircore/test/log"
+	"github.com/quay/claircore/test"
 )
 
 // TestScan runs the python scanner over some layers known to have python
@@ -24,47 +20,7 @@ func TestScan(t *testing.T) {
 	}
 }
 
-type scanTestcase struct {
-	Domain string
-	Name   string
-	Hash   string
-	Want   []*claircore.Package
-}
-
-func (tc scanTestcase) Digest() claircore.Digest {
-	d, err := claircore.ParseDigest(tc.Hash)
-	if err != nil {
-		panic(err)
-	}
-	return d
-}
-
-func (tc scanTestcase) Run(ctx context.Context) func(*testing.T) {
-	return func(t *testing.T) {
-		ctx = log.TestLogger(ctx, t)
-		l := &claircore.Layer{
-			Hash: tc.Digest(),
-		}
-		s := &python.Scanner{}
-		n, err := fetch.Layer(ctx, t, http.DefaultClient, tc.Domain, tc.Name, tc.Digest())
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer n.Close()
-		l.SetLocal(n.Name())
-
-		got, err := s.Scan(ctx, l)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Logf("found %d packages", len(got))
-		if !cmp.Equal(tc.Want, got) {
-			t.Error(cmp.Diff(tc.Want, got))
-		}
-	}
-}
-
-var scanTable = []scanTestcase{
+var scanTable = []test.ScannerTestcase{
 	{
 		Domain: "docker.io",
 		Name:   "library/hylang",
@@ -113,6 +69,7 @@ var scanTable = []scanTestcase{
 				PackageDB: "usr/local/lib/python3.7/site-packages",
 			},
 		},
+		Scanner: &python.Scanner{},
 	},
 	{
 		Domain: "docker.io",
@@ -240,6 +197,7 @@ var scanTable = []scanTestcase{
 				PackageDB: "vpy3/lib/python3.7/site-packages",
 			},
 		},
+		Scanner: &python.Scanner{},
 	},
 	{
 		Domain: "docker.io",
@@ -373,5 +331,6 @@ var scanTable = []scanTestcase{
 				PackageDB: "usr/local/lib/python3.7/site-packages",
 			},
 		},
+		Scanner: &python.Scanner{},
 	},
 }

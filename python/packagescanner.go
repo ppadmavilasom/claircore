@@ -24,19 +24,16 @@ var (
 	_ indexer.PackageScanner   = (*Scanner)(nil)
 )
 
-// Requirements file format:
-// https://pip.pypa.io/en/stable/reference/pip_install/#requirements-file-format
-
 // Scanner implements the scanner.PackageScanner interface.
 //
-// It looks for files requirements.txt and extracts a subset of the the
-// requirements file format.
+// It looks for directories that seem like wheels or eggs, and looks at the
+// metadata recorded there.
 //
 // The zero value is ready to use.
 type Scanner struct{}
 
 // Name implements scanner.VersionedScanner.
-func (*Scanner) Name() string { return "pip" }
+func (*Scanner) Name() string { return "python" }
 
 // Version implements scanner.VersionedScanner.
 func (*Scanner) Version() string { return "0.0.1" }
@@ -44,10 +41,10 @@ func (*Scanner) Version() string { return "0.0.1" }
 // Kind implements scanner.VersionedScanner.
 func (*Scanner) Kind() string { return "package" }
 
-// Scan attempts to find requirements.txt files within the layer and enumerate the
-// packages there.
+// Scan attempts to find wheel or egg info directories and record the package
+// information there.
 //
-// A return of (nil, nil) is expected if there's no file found.
+// A return of (nil, nil) is expected if there's nothing found.
 func (ps *Scanner) Scan(ctx context.Context, layer *claircore.Layer) ([]*claircore.Package, error) {
 	defer trace.StartRegion(ctx, "Scanner.Scan").End()
 	trace.Log(ctx, "layer", layer.Hash.String())
@@ -76,10 +73,8 @@ func (ps *Scanner) Scan(ctx context.Context, layer *claircore.Layer) ([]*clairco
 		return nil, errors.New("python: cannot seek on returned layer Reader")
 	}
 
-	ret := []*claircore.Package{}
+	var ret []*claircore.Package
 	tr := tar.NewReader(rd)
-	// Find possible rpm dbs
-	// If none found, return
 	var h *tar.Header
 	for h, err = tr.Next(); err == nil; h, err = tr.Next() {
 		n, err := filepath.Rel("/", filepath.Join("/", h.Name))
