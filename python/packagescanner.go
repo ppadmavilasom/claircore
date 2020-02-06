@@ -102,7 +102,7 @@ func (ps *Scanner) Scan(ctx context.Context, layer *claircore.Layer) ([]*clairco
 		ret = append(ret, &claircore.Package{
 			Name:      hdr.Get("Name"),
 			Version:   hdr.Get("Version"),
-			PackageDB: filepath.Join(n, "..", ".."),
+			PackageDB: "python:" + filepath.Join(n, "..", ".."),
 			Kind:      "source",
 			// TODO Is there some way to pick up on where a wheel or egg was
 			// found?
