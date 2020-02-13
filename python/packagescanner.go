@@ -17,6 +17,7 @@ import (
 
 	"github.com/quay/claircore"
 	"github.com/quay/claircore/internal/indexer"
+	"github.com/quay/claircore/pkg/pep440"
 )
 
 var (
@@ -99,11 +100,16 @@ func (ps *Scanner) Scan(ctx context.Context, layer *claircore.Layer) ([]*clairco
 		if err != nil {
 			return nil, err
 		}
+		v, err := pep440.Parse(hdr.Get("Version"))
+		if err != nil {
+			return nil, err
+		}
 		ret = append(ret, &claircore.Package{
-			Name:      hdr.Get("Name"),
-			Version:   hdr.Get("Version"),
-			PackageDB: "python:" + filepath.Join(n, "..", ".."),
-			Kind:      "source",
+			Name:              hdr.Get("Name"),
+			Version:           v.String(),
+			PackageDB:         "python:" + filepath.Join(n, "..", ".."),
+			Kind:              "source",
+			NormalizedVersion: v.Version(),
 			// TODO Is there some way to pick up on where a wheel or egg was
 			// found?
 			//RepositoryHint: "https://pypi.org/simple",
