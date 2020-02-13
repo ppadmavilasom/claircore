@@ -26,12 +26,11 @@ func TestStore(ctx context.Context, t testing.TB) (*sqlx.DB, *store, string, fun
 
 	db, err := integration.NewDB(ctx, t)
 	if err != nil {
-		t.Fatalf("unable to create test database: %w", err)
+		t.Fatalf("unable to create test database: %v", err)
 	}
 	cfg := db.Config()
 	// we are going to use pgx for more control over connection pool and
 	// and a cleaner api around bulk inserts
-	//cfg.MaxConns = 30
 	pool, err := pgxpool.ConnectConfig(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to create connpool: %v", err)
@@ -48,12 +47,14 @@ func TestStore(ctx context.Context, t testing.TB) (*sqlx.DB, *store, string, fun
 	migrator.Table = migrations.MigrationTable
 	err = migrator.Exec(migrate.Up, migrations.Migrations...)
 	if err != nil {
-		t.Fatalf("failed to perform migrations: %w", err)
+		t.Fatalf("failed to perform migrations: %v", err)
 	}
 
 	s := NewStore(sx, pool)
 
 	return sx, s, dsn, func() {
+		sx.Close()
+		pool.Close()
 		db.Close(ctx, t)
 	}
 }

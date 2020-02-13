@@ -240,7 +240,8 @@ func checkPackageScanArtifact(t *testing.T, db *sqlx.DB, expectedPkgs []*clairco
 			pkg.Version,
 		)
 		if err != nil {
-			t.Fatalf("received error selecting package id %s version %s", pkg.Name, pkg.Version)
+			t.Errorf("received error selecting package id %s version %s", pkg.Name, pkg.Version)
+			t.Fatal(err)
 		}
 
 		var layerHash claircore.Digest

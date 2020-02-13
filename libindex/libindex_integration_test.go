@@ -103,6 +103,7 @@ func (tc testcase) RunInner(ctx context.Context, t *testing.T, dsn string, next 
 	if err != nil {
 		t.Fatalf("failed to create libindex instance: %v", err)
 	}
+	defer lib.Close(ctx)
 
 	//setup scan and run
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
